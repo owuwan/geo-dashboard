@@ -63,11 +63,14 @@ function getToday() {
   return new Date().toISOString().split('T')[0]
 }
 
+const TEST_MODE = true // 테스트 모드: 3분 = 1개월
+const MONTH_MS = TEST_MODE ? 1000 * 60 * 3 : 1000 * 60 * 60 * 24 * 30
+
 function getCurrentMonth(biz: Business) {
   if (!biz.startDate) return 1
   const start = new Date(biz.startDate)
   const now = new Date()
-  const diff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30))
+  const diff = Math.floor((now.getTime() - start.getTime()) / MONTH_MS)
   return Math.min(Math.max(diff + 1, 1), 6)
 }
 
@@ -91,6 +94,13 @@ export default function Dashboard() {
   useEffect(() => {
     const saved = localStorage.getItem('geo_businesses')
     if (saved) setBusinesses(JSON.parse(saved))
+  }, [])
+
+  // 테스트 모드: 30초마다 화면 자동 갱신
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 30000)
+    return () => clearInterval(timer)
   }, [])
 
   const saveBiz = (list: Business[]) => {
@@ -240,8 +250,11 @@ export default function Dashboard() {
         {/* Dashboard */}
         {page === 'dashboard' && (
           <div>
-            <div style={s.pageTitle}>대시보드</div>
-            <div style={s.pageSub}>{now.getFullYear()}년 {now.getMonth()+1}월 기준</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+              <div style={s.pageTitle}>대시보드</div>
+              {TEST_MODE && <span style={{ background: '#FFF8E8', color: '#B8860B', border: '1px solid #C9A84C', fontSize: '0.72rem', padding: '3px 10px', borderRadius: '20px', fontWeight: 700 }}>🧪 테스트 모드 (3분 = 1개월)</span>}
+            </div>
+            <div style={s.pageSub}>{now.getFullYear()}년 {now.getMonth()+1}월 기준 {TEST_MODE && `· ${tick >= 0 ? '자동 갱신 중' : ''}`}</div>
             <div style={s.statsGrid}>
               {[
                 { label: '관리 중인 업체', value: businesses.length, sub: '등록된 업체' },
