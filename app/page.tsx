@@ -47,6 +47,7 @@ type Business = {
   menu: string
   features: string
   startDate: string
+  repo: string
   completedTasks: string[]
   taskLog: { key: string; label: string; month: number; date: string }[]
 }
@@ -89,31 +90,33 @@ export default function Dashboard() {
   const [aiOutput, setAiOutput] = useState('')
   const [generating, setGenerating] = useState(false)
   const [activeTab, setActiveTab] = useState('roadmap')
-  const [form, setForm] = useState({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: getToday() })
+  const [form, setForm] = useState({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: getToday(), repo: '' })
 
   useEffect(() => {
-    const saved = localStorage.getItem('geo_businesses')
-    if (saved) setBusinesses(JSON.parse(saved))
+    fetch('/api/businesses').then(r => r.json()).then(data => setBusinesses(data || []))
   }, [])
 
-  // 테스트 모드: 30초마다 화면 자동 갱신
+  // 30초마다 자동 갱신
   const [tick, setTick] = useState(0)
   useEffect(() => {
-    const timer = setInterval(() => setTick(t => t + 1), 30000)
+    const timer = setInterval(() => {
+      setTick(t => t + 1)
+      fetch('/api/businesses').then(r => r.json()).then(data => setBusinesses(data || []))
+    }, 30000)
     return () => clearInterval(timer)
   }, [])
 
-  const saveBiz = (list: Business[]) => {
+  const saveBiz = async (list: Business[]) => {
     setBusinesses(list)
-    localStorage.setItem('geo_businesses', JSON.stringify(list))
+    await fetch('/api/businesses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) })
   }
 
-  const addBusiness = () => {
+  const addBusiness = async () => {
     if (!form.name || !form.domain || !form.region || !form.type) { alert('필수 항목을 입력해주세요.'); return }
     const biz: Business = { id: Date.now().toString(), ...form, completedTasks: [], taskLog: [] }
-    saveBiz([...businesses, biz])
+    await saveBiz([...businesses, biz])
     setShowAddModal(false)
-    setForm({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: getToday() })
+    setForm({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: getToday(), repo: '' })
   }
 
   const openTaskModal = (task: TaskInfo) => {
@@ -474,7 +477,7 @@ export default function Dashboard() {
           <div style={s.modalBox}>
             <div style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '24px' }}>새 업체 등록</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              {[['name','상호명','예: 해운대분식'],['domain','도메인','예: haeundaebungsik.vercel.app'],['region','지역','예: 부산 해운대구'],['type','업종','예: 분식 전문점']].map(([key, label, ph]) => (
+              {[['name','상호명','예: 해운대분식'],['domain','도메인','예: haeundaebungsik.vercel.app'],['region','지역','예: 부산 해운대구'],['type','업종','예: 분식 전문점'],['repo','GitHub 저장소명','예: haeundaebungsik']].map(([key, label, ph]) => (
                 <div key={key}>
                   <label style={s.formLabel}>{label}</label>
                   <input style={s.formInput} placeholder={ph} value={form[key as keyof typeof form]} onChange={e => setForm({...form, [key]: e.target.value})} />
@@ -487,6 +490,9 @@ export default function Dashboard() {
             <textarea style={{...s.formInput, height: '100px', resize: 'vertical'}} placeholder="예: 매일 직접 양념 제조, 18년 운영" value={form.features} onChange={e => setForm({...form, features: e.target.value})} />
             <label style={s.formLabel}>관리 시작일</label>
             <input style={s.formInput} type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} />
+            <div style={{ background: '#FFF8E8', border: '1px solid #C9A84C', borderRadius: '8px', padding: '12px', fontSize: '0.78rem', color: '#8B6914', marginBottom: '16px' }}>
+              🤖 Cron이 3분마다 자동 실행되어 GitHub 저장소를 직접 업데이트합니다.
+            </div>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
               <button style={s.btn('secondary')} onClick={() => setShowAddModal(false)}>취소</button>
               <button style={s.btn('primary')} onClick={addBusiness}>🚀 6개월 관리 시작</button>
