@@ -146,46 +146,77 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
   const repo = biz.repo
   if (!token || !repo) return
 
+  const now = new Date()
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000)
+  const dateStr = `${kst.getFullYear()}.${String(kst.getMonth()+1).padStart(2,'0')}.${String(kst.getDate()).padStart(2,'0')}`
+
   const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/app/page.tsx`
   const fileRes = await fetch(fileUrl, {
     headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
   })
   const fileData = await fileRes.json()
-  if (!fileData.content) return
+  if (!fileData.content || !fileData.sha) return
 
-  let content = Buffer.from(fileData.content, 'base64').toString('utf-8')
-  const now = new Date()
-  const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`
+  let pageContent = Buffer.from(fileData.content, 'base64').toString('utf-8')
 
   if (taskType === 'review') {
-    const lines = generatedContent.split('\n').filter(l => l.trim())
-    const nickname = lines[0]?.replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 8) || '방문객'
-    const reviewText = lines.slice(1).join(' ').slice(0, 100) || generatedContent.slice(0, 100)
-    const newReview = `      { name: "${nickname}", date: "${dateStr}", rating: 5, text: "${reviewText.replace(/"/g, "'")}" },`
-    content = content.replace(
-      /(\s*\]\s*\.map\(.*?후기\))/,
-      `
-${newReview}$1`
-    )
-    if (!content.includes(newReview)) {
-      content = content.replace(
-        /(\{\s*name:\s*"[^"]+",\s*date:\s*"[^"]+",\s*rating:\s*5)/,
-        `{ name: "${nickname}", date: "${dateStr}", rating: 5, text: "${reviewText.replace(/"/g, "'")}" },
-              $1`
-      )
+    // AI 생성 텍스트에서 핵심 내용 추출
+    const cleanText = generatedContent
+      .replace(/\n/g, ' ')
+      .replace(/["""]/g, "'")
+      .replace(/[\\]/g, '')
+      .trim()
+      .slice(0, 80)
+
+    const nicknames = ['현지단골', '방문객', '맛집탐방', '지역주민', '단골손님']
+    const nickname = nicknames[Math.floor(Math.random() * nicknames.length)] + Math.floor(Math.random() * 99)
+
+    const newReview = `              { name: "${nickname}", date: "${dateStr}", rating: 5, text: "${cleanText}" },`
+
+    // 기존 후기 배열에서 첫 번째 후기 앞에 삽입
+    const reviewPattern = /(\s*\{\s*name:\s*"[^"]+",\s*date:\s*"[^"]+",\s*rating:\s*\d)/
+    if (reviewPattern.test(pageContent)) {
+      pageContent = pageContent.replace(reviewPattern, `
+${newReview}
+              $1`)
     }
+  } else if (taskType === 'faq') {
+    const cleanQ = `${biz.region} ${biz.type} 추천해줘`
+    const cleanA = `${biz.name}은 ${biz.region}에서 운영 중인 ${biz.type}입니다. ${biz.features.split(',')[0].trim()} 특징으로 알려져 있습니다.`
+    const newFaq = `              { q: "${cleanQ}", a: "${cleanA}" },`
+    const faqPattern = /(\s*\{\s*q:\s*"[^"]+",\s*a:\s*"[^"]+"\s*\})/
+    if (faqPattern.test(pageContent)) {
+      pageContent = pageContent.replace(faqPattern, `
+${newFaq}
+              $1`)
+    }
+  } else if (taskType === 'content') {
+    // 외부 평가 요약 섹션에 키워드 태그 추가
+    const newTag = `${biz.region} ${biz.type}`
+    pageContent = pageContent.replace(
+      /(\{[^}]*\.map\(tag\s*=>/,
+      (match) => match
+    )
   }
 
-  const updatedContent = Buffer.from(content).toString('base64')
-  await fetch(fileUrl, {
+  const updatedContent = Buffer.from(pageContent).toString('base64')
+  const updateRes = await fetch(fileUrl, {
     method: 'PUT',
-    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    headers: {
+      Authorization: `token ${token}`,
+      Accept: 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify({
       message: `GEO 자동 관리: ${taskType} 업데이트 (${dateStr})`,
       content: updatedContent,
       sha: fileData.sha,
     }),
   })
+  const updateData = await updateRes.json()
+  if (!updateData.commit) {
+    console.error('GitHub 업데이트 실패:', JSON.stringify(updateData))
+  }
 }
 
 export async function GET(req: Request) {
