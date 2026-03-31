@@ -191,12 +191,8 @@ ${newFaq}
               $1`)
     }
   } else if (taskType === 'content') {
-    // 외부 평가 요약 섹션에 키워드 태그 추가
-    const newTag = `${biz.region} ${biz.type}`
-    pageContent = pageContent.replace(
-      /(\{[^}]*\.map\(tag\s*=>/,
-      (match) => match
-    )
+    // content 타입은 AI 생성 내용만 기록 (페이지 직접 수정 없음)
+    console.log('content generated:', generatedContent.slice(0, 50))
   }
 
   const updatedContent = Buffer.from(pageContent).toString('base64')
