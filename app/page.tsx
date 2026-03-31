@@ -90,7 +90,12 @@ export default function Dashboard() {
   const [aiOutput, setAiOutput] = useState('')
   const [generating, setGenerating] = useState(false)
   const [activeTab, setActiveTab] = useState('roadmap')
-  const [form, setForm] = useState({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: new Date().toISOString(), repo: '' })
+  const getLocalISO = () => {
+    const now = new Date()
+    const offset = now.getTimezoneOffset() * 60000
+    return new Date(now.getTime() - offset).toISOString()
+  }
+  const [form, setForm] = useState({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: getLocalISO(), repo: '' })
 
   useEffect(() => {
     fetch('/api/businesses').then(r => r.json()).then(data => setBusinesses(data || []))
@@ -116,7 +121,7 @@ export default function Dashboard() {
     const biz: Business = { id: Date.now().toString(), ...form, completedTasks: [], taskLog: [] }
     await saveBiz([...businesses, biz])
     setShowAddModal(false)
-    setForm({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: new Date().toISOString(), repo: '' })
+    setForm({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: getLocalISO(), repo: '' })
   }
 
   const openTaskModal = (task: TaskInfo) => {
