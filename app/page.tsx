@@ -90,7 +90,7 @@ export default function Dashboard() {
   const [aiOutput, setAiOutput] = useState('')
   const [generating, setGenerating] = useState(false)
   const [activeTab, setActiveTab] = useState('roadmap')
-  const [form, setForm] = useState({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: getToday(), repo: '' })
+  const [form, setForm] = useState({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: new Date().toISOString(), repo: '' })
 
   useEffect(() => {
     fetch('/api/businesses').then(r => r.json()).then(data => setBusinesses(data || []))
@@ -116,7 +116,7 @@ export default function Dashboard() {
     const biz: Business = { id: Date.now().toString(), ...form, completedTasks: [], taskLog: [] }
     await saveBiz([...businesses, biz])
     setShowAddModal(false)
-    setForm({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: getToday(), repo: '' })
+    setForm({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: new Date().toISOString(), repo: '' })
   }
 
   const openTaskModal = (task: TaskInfo) => {
@@ -489,7 +489,7 @@ export default function Dashboard() {
             <label style={s.formLabel}>업체 특징</label>
             <textarea style={{...s.formInput, height: '100px', resize: 'vertical'}} placeholder="예: 매일 직접 양념 제조, 18년 운영" value={form.features} onChange={e => setForm({...form, features: e.target.value})} />
             <label style={s.formLabel}>관리 시작일</label>
-            <input style={s.formInput} type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} />
+            <input style={s.formInput} type="datetime-local" value={form.startDate.slice(0,16)} onChange={e => setForm({...form, startDate: new Date(e.target.value).toISOString()})} />
             <div style={{ background: '#FFF8E8', border: '1px solid #C9A84C', borderRadius: '8px', padding: '12px', fontSize: '0.78rem', color: '#8B6914', marginBottom: '16px' }}>
               🤖 Cron이 3분마다 자동 실행되어 GitHub 저장소를 직접 업데이트합니다.
             </div>
