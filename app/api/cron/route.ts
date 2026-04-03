@@ -160,10 +160,11 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
   let pageContent = Buffer.from(fileData.content, 'base64').toString('utf-8')
 
   if (taskType === 'review') {
-    const cleanText = generatedContent
-      .replace(/\n/g, ' ')
+    const lines = generatedContent.split('\n').filter(l => l.trim().length > 10)
+    const cleanText = (lines[1] || lines[0] || generatedContent)
       .replace(/"/g, "'")
       .replace(/\\/g, '')
+      .replace(/^[-*•#\d.]+\s*/, '')
       .trim()
       .slice(0, 100)
 
@@ -185,12 +186,12 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
               <p className="text-gray-700 text-sm leading-relaxed">${cleanText}</p>
             </div>`
 
-    // 첫 번째 후기 블록 바로 앞에 삽입
-    const insertMarker = '<div className="space-y-4">'
+    // 후기 섹션 고유 마커로 삽입
+    const insertMarker = '<p className="text-gray-500 mb-8">실제 방문 손님들의 이야기</p>'
     if (pageContent.includes(insertMarker)) {
       pageContent = pageContent.replace(
         insertMarker,
-        insertMarker + '\n' + newReviewBlock
+        insertMarker + '\n          <div className="space-y-4">\n' + newReviewBlock + '\n          </div>'
       )
     }
   } else if (taskType === 'faq') {
