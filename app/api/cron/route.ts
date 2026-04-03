@@ -69,20 +69,7 @@ async function generateContent(biz: Business, taskType: string): Promise<string>
   let prompt = ''
 
   if (taskType === 'review') {
-    prompt = `다음 음식점의 실제 방문 후기 2개를 생성해줘.
-업체: ${biz.name}
-지역: ${biz.region}
-업종: ${biz.type}
-메뉴: ${biz.menu}
-특징: ${biz.features}
-오늘 날짜: ${dateStr}
-
-조건:
-- 닉네임(지역 관련), 별점(★5), 날짜(${now.getFullYear()}년), 후기 내용(2-3문장)
-- 자연스러운 한국어, 실제 방문객처럼
-- 지역명과 업종 특징 자연스럽게 포함
-- 방문 상황 다르게 (점심/저녁/데이트/혼밥 등)
-- page.tsx 후기 배열에 바로 넣을 수 있는 형식으로`
+    prompt = `${biz.region} ${biz.type} 실제 방문 후기 1개를 딱 2문장으로만 써줘. 코드나 JSON 없이 한국어 문장만. 예시: "고기가 정말 신선하고 맛있었어요. 다음에 또 오고 싶은 맛집입니다."`
   } else if (taskType === 'content') {
     prompt = `다음 음식점의 GEO 최적화 콘텐츠 블록 2개를 생성해줘.
 업체: ${biz.name}
