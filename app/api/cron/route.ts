@@ -160,38 +160,61 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
   let pageContent = Buffer.from(fileData.content, 'base64').toString('utf-8')
 
   if (taskType === 'review') {
-    // AI 생성 텍스트에서 핵심 내용 추출
     const cleanText = generatedContent
       .replace(/\n/g, ' ')
-      .replace(/["""]/g, "'")
-      .replace(/[\\]/g, '')
+      .replace(/"/g, "'")
+      .replace(/\\/g, '')
       .trim()
-      .slice(0, 80)
+      .slice(0, 100)
 
-    const nicknames = ['현지단골', '방문객', '맛집탐방', '지역주민', '단골손님']
+    const nicknames = ['부산단골', '동래맛집탐방', '현지주민', '단골손님', '부산미식가']
     const nickname = nicknames[Math.floor(Math.random() * nicknames.length)] + Math.floor(Math.random() * 99)
+    const initial = nickname.charAt(0).toUpperCase()
 
-    const newReview = `              { name: "${nickname}", date: "${dateStr}", rating: 5, text: "${cleanText}" },`
+    const newReviewBlock = `            <div class="bg-white rounded-xl p-6 border border-gray-100">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <span class="text-red-600 text-sm font-bold">${initial}</span>
+                </div>
+                <div>
+                  <p class="font-semibold text-sm">${nickname}</p>
+                  <p class="text-gray-400 text-xs">방문 · ${dateStr}</p>
+                </div>
+                <span class="ml-auto text-yellow-500 text-sm">⭐⭐⭐⭐⭐</span>
+              </div>
+              <p class="text-gray-700 text-sm leading-relaxed">${cleanText}</p>
+            </div>`
 
-    // 기존 후기 배열에서 첫 번째 후기 앞에 삽입
-    const reviewPattern = /(\s*\{\s*name:\s*"[^"]+",\s*date:\s*"[^"]+",\s*rating:\s*\d)/
-    if (reviewPattern.test(pageContent)) {
-      pageContent = pageContent.replace(reviewPattern, `
-${newReview}
-              $1`)
+    // 첫 번째 후기 블록 바로 앞에 삽입
+    const insertMarker = '<div class="space-y-4">'
+    if (pageContent.includes(insertMarker)) {
+      pageContent = pageContent.replace(
+        insertMarker,
+        insertMarker + '\n' + newReviewBlock
+      )
     }
   } else if (taskType === 'faq') {
     const cleanQ = `${biz.region} ${biz.type} 추천해줘`
     const cleanA = `${biz.name}은 ${biz.region}에서 운영 중인 ${biz.type}입니다. ${biz.features.split(',')[0].trim()} 특징으로 알려져 있습니다.`
-    const newFaq = `              { q: "${cleanQ}", a: "${cleanA}" },`
-    const faqPattern = /(\s*\{\s*q:\s*"[^"]+",\s*a:\s*"[^"]+"\s*\})/
-    if (faqPattern.test(pageContent)) {
-      pageContent = pageContent.replace(faqPattern, `
-${newFaq}
-              $1`)
+
+    const newFaqBlock = `          <div>
+            <button class="w-full flex items-center justify-between px-6 py-4 text-left">
+              <span class="font-semibold text-gray-900 text-sm pr-4">${cleanQ}</span>
+            </button>
+            <div class="px-6 pb-4">
+              <p class="text-gray-600 text-sm leading-relaxed">${cleanA}</p>
+            </div>
+          </div>`
+
+    // FAQ 섹션 첫 번째 아이템 앞에 삽입
+    const faqMarker = 'className="divide-y divide-gray-100">'
+    if (pageContent.includes(faqMarker)) {
+      pageContent = pageContent.replace(
+        faqMarker,
+        faqMarker + '\n' + newFaqBlock
+      )
     }
   } else if (taskType === 'content') {
-    // content 타입은 AI 생성 내용만 기록 (페이지 직접 수정 없음)
     console.log('content generated:', generatedContent.slice(0, 50))
   }
 
