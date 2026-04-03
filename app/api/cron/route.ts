@@ -186,7 +186,7 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
             </div>`
 
     // 첫 번째 후기 블록 바로 앞에 삽입
-    const insertMarker = '<div class="space-y-4">'
+    const insertMarker = '<div className="space-y-4">'
     if (pageContent.includes(insertMarker)) {
       pageContent = pageContent.replace(
         insertMarker,
@@ -207,7 +207,7 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
           </div>`
 
     // FAQ 섹션 첫 번째 아이템 앞에 삽입
-    const faqMarker = 'className="divide-y divide-gray-100">'
+    const faqMarker = 'className="divide-y divide-gray-100 rounded-xl overflow-hidden">'
     if (pageContent.includes(faqMarker)) {
       pageContent = pageContent.replace(
         faqMarker,
