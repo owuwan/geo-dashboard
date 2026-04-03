@@ -160,15 +160,11 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
   let pageContent = Buffer.from(fileData.content, 'base64').toString('utf-8')
 
   if (taskType === 'review') {
-    // 한국어 문장 추출 (20자 이상인 줄 우선)
-    const allLines = generatedContent.split('\n').map(l => l.trim()).filter(l => l.length > 20)
-    const koreanLines = allLines.filter(l => /[가-힣]/.test(l))
-    const rawText = koreanLines[0] || allLines[0] || generatedContent.slice(0, 100)
-    const cleanText = rawText
+    const cleanText = generatedContent
+      .replace(/\n/g, ' ')
       .replace(/"/g, "'")
-      .replace(/\\/g, '')
-      .replace(/^[-*•#\d.:\s]+/, '')
-      .replace(/후기\s*\d*[:.]?\s*/g, '')
+      .replace(/#+\s*/g, '')
+      .replace(/\*\*/g, '')
       .trim()
       .slice(0, 100)
 
@@ -199,26 +195,7 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
       )
     }
   } else if (taskType === 'faq') {
-    const cleanQ = `${biz.region} ${biz.type} 추천해줘`
-    const cleanA = `${biz.name}은 ${biz.region}에서 운영 중인 ${biz.type}입니다. ${biz.features.split(',')[0].trim()} 특징으로 알려져 있습니다.`
-
-    const newFaqBlock = `          <div>
-            <button className="w-full flex items-center justify-between px-6 py-4 text-left">
-              <span className="font-semibold text-gray-900 text-sm pr-4">${cleanQ}</span>
-            </button>
-            <div className="px-6 pb-4">
-              <p className="text-gray-600 text-sm leading-relaxed">${cleanA}</p>
-            </div>
-          </div>`
-
-    // FAQ 섹션 첫 번째 아이템 앞에 삽입
-    const faqMarker = 'className="divide-y divide-gray-100 rounded-xl overflow-hidden">'
-    if (pageContent.includes(faqMarker)) {
-      pageContent = pageContent.replace(
-        faqMarker,
-        faqMarker + '\n' + newFaqBlock
-      )
-    }
+    console.log('faq generated for:', biz.name)
   } else if (taskType === 'content') {
     console.log('content generated:', generatedContent.slice(0, 50))
   }
