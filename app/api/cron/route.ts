@@ -171,18 +171,18 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
     const nickname = nicknames[Math.floor(Math.random() * nicknames.length)] + Math.floor(Math.random() * 99)
     const initial = nickname.charAt(0).toUpperCase()
 
-    const newReviewBlock = `            <div class="bg-white rounded-xl p-6 border border-gray-100">
-              <div class="flex items-center gap-3 mb-3">
-                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <span class="text-red-600 text-sm font-bold">${initial}</span>
+    const newReviewBlock = `            <div className="bg-white rounded-xl p-6 border border-gray-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <span className="text-red-600 text-sm font-bold">${initial}</span>
                 </div>
                 <div>
-                  <p class="font-semibold text-sm">${nickname}</p>
-                  <p class="text-gray-400 text-xs">방문 · ${dateStr}</p>
+                  <p className="font-semibold text-sm">${nickname}</p>
+                  <p className="text-gray-400 text-xs">방문 · ${dateStr}</p>
                 </div>
-                <span class="ml-auto text-yellow-500 text-sm">⭐⭐⭐⭐⭐</span>
+                <span className="ml-auto text-yellow-500 text-sm">⭐⭐⭐⭐⭐</span>
               </div>
-              <p class="text-gray-700 text-sm leading-relaxed">${cleanText}</p>
+              <p className="text-gray-700 text-sm leading-relaxed">${cleanText}</p>
             </div>`
 
     // 첫 번째 후기 블록 바로 앞에 삽입
@@ -198,11 +198,11 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
     const cleanA = `${biz.name}은 ${biz.region}에서 운영 중인 ${biz.type}입니다. ${biz.features.split(',')[0].trim()} 특징으로 알려져 있습니다.`
 
     const newFaqBlock = `          <div>
-            <button class="w-full flex items-center justify-between px-6 py-4 text-left">
-              <span class="font-semibold text-gray-900 text-sm pr-4">${cleanQ}</span>
+            <button className="w-full flex items-center justify-between px-6 py-4 text-left">
+              <span className="font-semibold text-gray-900 text-sm pr-4">${cleanQ}</span>
             </button>
-            <div class="px-6 pb-4">
-              <p class="text-gray-600 text-sm leading-relaxed">${cleanA}</p>
+            <div className="px-6 pb-4">
+              <p className="text-gray-600 text-sm leading-relaxed">${cleanA}</p>
             </div>
           </div>`
 
