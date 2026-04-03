@@ -160,11 +160,15 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
   let pageContent = Buffer.from(fileData.content, 'base64').toString('utf-8')
 
   if (taskType === 'review') {
-    const lines = generatedContent.split('\n').filter(l => l.trim().length > 10)
-    const cleanText = (lines[1] || lines[0] || generatedContent)
+    // 한국어 문장 추출 (20자 이상인 줄 우선)
+    const allLines = generatedContent.split('\n').map(l => l.trim()).filter(l => l.length > 20)
+    const koreanLines = allLines.filter(l => /[가-힣]/.test(l))
+    const rawText = koreanLines[0] || allLines[0] || generatedContent.slice(0, 100)
+    const cleanText = rawText
       .replace(/"/g, "'")
       .replace(/\\/g, '')
-      .replace(/^[-*•#\d.]+\s*/, '')
+      .replace(/^[-*•#\d.:\s]+/, '')
+      .replace(/후기\s*\d*[:.]?\s*/g, '')
       .trim()
       .slice(0, 100)
 
