@@ -192,13 +192,14 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
               <p className="text-gray-700 text-sm leading-relaxed">${cleanText}</p>
             </div>`
 
-    // 후기 섹션 고유 마커로 삽입
-    const insertMarker = '<p className="text-gray-500 mb-8">실제 방문 손님들의 이야기</p>'
-    if (pageContent.includes(insertMarker)) {
-      pageContent = pageContent.replace(
-        insertMarker,
-        insertMarker + '\n          <div className="space-y-4">\n' + newReviewBlock + '\n          </div>'
-      )
+    // 후기 섹션 첫번째 후기 앞에 삽입
+    const insertMarker = '<div className="space-y-4">'
+    const reviewSection = '실제 방문 손님들의 이야기'
+    const reviewSectionIdx = pageContent.indexOf(reviewSection)
+    const spaceY4Idx = pageContent.indexOf(insertMarker, reviewSectionIdx)
+    if (reviewSectionIdx !== -1 && spaceY4Idx !== -1) {
+      const insertPos = spaceY4Idx + insertMarker.length
+      pageContent = pageContent.slice(0, insertPos) + '\n' + newReviewBlock + pageContent.slice(insertPos)
     }
   } else if (taskType === 'faq') {
     console.log('faq generated for:', biz.name)
