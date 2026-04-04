@@ -192,16 +192,7 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
               <p className="text-gray-700 text-sm leading-relaxed">${cleanText}</p>
             </div>`
 
-    // 후기 섹션 첫번째 후기 앞에 삽입
-    const insertMarker = '<div className="space-y-4">'
-    const reviewSection = '실제 방문 손님들의 이야기'
-    const reviewSectionIdx = pageContent.indexOf(reviewSection)
-    const spaceY4Idx = pageContent.indexOf(insertMarker, reviewSectionIdx)
-    if (reviewSectionIdx !== -1 && spaceY4Idx !== -1) {
-      const insertPos = spaceY4Idx + insertMarker.length
-      pageContent = pageContent.slice(0, insertPos) + '\n' + newReviewBlock + pageContent.slice(insertPos)
-    }
-    // allReviews 배열에도 추가 (페이지네이션용)
+    // allReviews 배열에 추가 (페이지네이션용)
     const reviewArrayMarker = 'const allReviews: {initial: string, name: string, date: string, text: string}[] = ['
     if (pageContent.includes(reviewArrayMarker)) {
       const newReviewItem = `\n    { initial: '${initial}', name: '${nickname}', date: '${dateStr}', text: '${cleanText.replace(/'/g, "\'")}' },`
