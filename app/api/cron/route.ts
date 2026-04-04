@@ -18,6 +18,8 @@ type Business = {
   taskLog: TaskLog[]
   lastReviewDate?: string
   nextReviewDays?: number
+  lastTimestampDate?: string
+  lastMenuDate?: string
 }
 
 function getCurrentMonth(biz: Business) {
@@ -65,6 +67,14 @@ const MONTHLY_TASKS: Record<number, { id: string; label: string; type: string }[
   ],
 }
 
+const WEEKLY_TASKS = [
+  { id: 'timestamp', label: '날짜 타임스탬프 갱신', type: 'timestamp' },
+]
+
+const MONTHLY_FIRST_TASKS = [
+  { id: 'menu', label: '이번 달 추천 메뉴 업데이트', type: 'menu' },
+]
+
 async function generateContent(biz: Business, taskType: string): Promise<string> {
   const now = new Date()
   const dateStr = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일`
@@ -110,6 +120,13 @@ async function generateContent(biz: Business, taskType: string): Promise<string>
 2. GEO 최적화 달성 항목 체크리스트
 3. 예상 AI 추천 개선 효과
 4. 향후 유지관리 권장사항`
+  } else if (taskType === 'timestamp') {
+    prompt = `아래 업체의 "현재 운영 중" 타임스탬프 문구를 현재 날짜로 업데이트할 새 문구를 딱 한 줄만 써줘. 코드 없이 텍스트만.
+업체: ${biz.name}, ${biz.region} ${biz.type}
+현재 날짜: ${dateStr}
+예시: "${biz.region}에서 ${now.getFullYear()}년 ${now.getMonth()+1}월 현재 운영 중"`
+  } else if (taskType === 'menu') {
+    prompt = `${biz.region} ${biz.type} ${biz.name}의 이번 달(${now.getMonth()+1}월) 추천 메뉴를 딱 한 줄로 써줘. 메뉴: ${biz.menu}. 코드 없이 텍스트만. 예시: "이번 달 추천 메뉴는 생갈비살입니다. 봄철 신선한 재료로 더욱 맛있습니다."`
   }
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -217,10 +234,29 @@ export async function GET(req: Request) {
 
   const businesses = (await redis.get('geo_businesses') || []) as Business[]
   const results = []
+  const now = new Date()
+  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000)
+  const isFirstWeek = kstNow.getDate() <= 7
 
   for (const biz of businesses) {
     const month = getCurrentMonth(biz)
     const tasks = MONTHLY_TASKS[month] || []
+
+    // 매주 타임스탬프 갱신
+    for (const task of WEEKLY_TASKS) {
+      const generatedContent = await generateContent(biz, task.type)
+      await updateGitHub(biz, task.type, generatedContent)
+      results.push({ biz: biz.name, task: task.label, month, status: 'done' })
+    }
+
+    // 매월 첫째주 추천 메뉴 업데이트
+    if (isFirstWeek) {
+      for (const task of MONTHLY_FIRST_TASKS) {
+        const generatedContent = await generateContent(biz, task.type)
+        await updateGitHub(biz, task.type, generatedContent)
+        results.push({ biz: biz.name, task: task.label, month, status: 'done' })
+      }
+    }
 
     for (const task of tasks) {
       const key = `month${month}_${task.id}`
