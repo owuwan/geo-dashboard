@@ -201,6 +201,15 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
       const insertPos = spaceY4Idx + insertMarker.length
       pageContent = pageContent.slice(0, insertPos) + '\n' + newReviewBlock + pageContent.slice(insertPos)
     }
+    // allReviews 배열에도 추가 (페이지네이션용)
+    const reviewArrayMarker = 'const allReviews: {initial: string, name: string, date: string, text: string}[] = ['
+    if (pageContent.includes(reviewArrayMarker)) {
+      const newReviewItem = `\n    { initial: '${initial}', name: '${nickname}', date: '${dateStr}', text: '${cleanText.replace(/'/g, "\'")}' },`
+      pageContent = pageContent.replace(
+        reviewArrayMarker,
+        reviewArrayMarker + newReviewItem
+      )
+    }
   } else if (taskType === 'faq') {
     console.log('faq generated for:', biz.name)
   } else if (taskType === 'content') {
