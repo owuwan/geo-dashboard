@@ -16,6 +16,8 @@ type Business = {
   repo: string
   completedTasks: string[]
   taskLog: TaskLog[]
+  lastReviewDate?: string
+  nextReviewDays?: number
 }
 
 function getCurrentMonth(biz: Business) {
@@ -225,7 +227,32 @@ export async function GET(req: Request) {
       if (biz.completedTasks.includes(key)) continue
 
       let generatedContent = ''
-      if (['review', 'content', 'faq', 'report'].includes(task.type)) {
+      if (task.type === 'review') {
+        // 4~6일 랜덤 간격 체크
+        const now = new Date()
+        const lastReview = biz.lastReviewDate ? new Date(biz.lastReviewDate) : null
+        const nextDays = biz.nextReviewDays || Math.floor(Math.random() * 3) + 4 // 4~6일
+        const daysSince = lastReview
+          ? Math.floor((now.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24))
+          : 999
+
+        if (MONTH_MS < 1000 * 60 * 60) {
+          // 테스트 모드: 간격 체크 스킵
+          generatedContent = await generateContent(biz, task.type)
+          await updateGitHub(biz, task.type, generatedContent)
+          biz.lastReviewDate = now.toISOString()
+          biz.nextReviewDays = Math.floor(Math.random() * 3) + 4
+        } else if (daysSince >= nextDays) {
+          // 실제 운영: 4~6일 지났을 때만 추가
+          generatedContent = await generateContent(biz, task.type)
+          await updateGitHub(biz, task.type, generatedContent)
+          biz.lastReviewDate = now.toISOString()
+          biz.nextReviewDays = Math.floor(Math.random() * 3) + 4
+        } else {
+          results.push({ biz: biz.name, task: task.label, month, status: `skipped (${daysSince}/${nextDays}일)` })
+          continue
+        }
+      } else if (['content', 'faq', 'report'].includes(task.type)) {
         generatedContent = await generateContent(biz, task.type)
         await updateGitHub(biz, task.type, generatedContent)
       }

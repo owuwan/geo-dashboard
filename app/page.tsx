@@ -103,6 +103,8 @@ export default function Dashboard() {
 
   // 30초마다 자동 갱신
   const [tick, setTick] = useState(0)
+  const [autoRun, setAutoRun] = useState(false)
+  const [cronResult, setCronResult] = useState('')
   useEffect(() => {
     const timer = setInterval(() => {
       setTick(t => t + 1)
@@ -263,6 +265,23 @@ export default function Dashboard() {
               {TEST_MODE && <span style={{ background: '#FFF8E8', color: '#B8860B', border: '1px solid #C9A84C', fontSize: '0.72rem', padding: '3px 10px', borderRadius: '20px', fontWeight: 700 }}>🧪 테스트 모드 (3분 = 1개월)</span>}
             </div>
             <div style={s.pageSub}>{now.getFullYear()}년 {now.getMonth()+1}월 기준 {TEST_MODE && `· ${tick >= 0 ? '자동 갱신 중' : ''}`}</div>
+            {/* 테스트 컨트롤 패널 */}
+            <div style={{ background: '#FFF8E8', border: '1px solid #C9A84C', borderRadius: '12px', padding: '16px 24px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#8B6914', marginBottom: '4px' }}>🧪 테스트 모드 (3분 = 1개월)</div>
+                {cronResult && <div style={{ fontSize: '0.78rem', color: '#8B6914' }}>마지막 실행: {cronResult}</div>}
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button style={{ ...s.btn('sm'), background: autoRun ? '#E24B4A' : '#C9A84C', color: '#fff', border: 'none' }}
+                  onClick={() => setAutoRun(a => !a)}>
+                  {autoRun ? '⏹ 자동 중지' : '▶ 3분 자동 실행'}
+                </button>
+                <button style={{ ...s.btn('sm'), background: '#1a1a1a', color: '#fff', border: 'none' }}
+                  onClick={runCronNow}>
+                  ⚡ 지금 실행
+                </button>
+              </div>
+            </div>
             <div style={s.statsGrid}>
               {[
                 { label: '관리 중인 업체', value: businesses.length, sub: '등록된 업체' },
