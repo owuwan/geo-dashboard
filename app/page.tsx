@@ -96,15 +96,16 @@ export default function Dashboard() {
     return new Date(now.getTime() - offset).toISOString()
   }
   const [form, setForm] = useState({ name: '', domain: '', region: '', type: '', menu: '', features: '', startDate: getLocalISO(), repo: '' })
+  const [tick, setTick] = useState(0)
+  const [autoRun, setAutoRun] = useState(false)
+  const [cronResult, setCronResult] = useState('')
 
   useEffect(() => {
     fetch('/api/businesses').then(r => r.json()).then(data => setBusinesses(data || []))
   }, [])
 
   // 30초마다 자동 갱신
-  const [tick, setTick] = useState(0)
-  const [autoRun, setAutoRun] = useState(false)
-  const [cronResult, setCronResult] = useState('')
+
   useEffect(() => {
     const timer = setInterval(() => {
       setTick(t => t + 1)
@@ -112,6 +113,13 @@ export default function Dashboard() {
     }, 30000)
     return () => clearInterval(timer)
   }, [])
+
+  const runCronNow = async () => {
+    const res = await fetch('/api/cron', { headers: { authorization: 'Bearer geo-studio-2026' } })
+    const data = await res.json()
+    setCronResult(`${new Date().toLocaleTimeString()} — ${data.processed}개 처리됨`)
+    fetch('/api/businesses').then(r => r.json()).then(d => setBusinesses(d || []))
+  }
 
   const saveBiz = async (list: Business[]) => {
     setBusinesses(list)
