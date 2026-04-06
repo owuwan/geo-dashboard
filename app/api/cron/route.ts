@@ -194,12 +194,15 @@ async function updateGitHub(biz: Business, taskType: string, generatedContent: s
 
     // allReviews 배열에 추가 (페이지네이션용)
     const reviewArrayMarker = 'const allReviews: {initial: string, name: string, date: string, text: string}[] = ['
+    console.log('marker found:', pageContent.includes(reviewArrayMarker))
+    console.log('cleanText:', cleanText.slice(0, 30))
     if (pageContent.includes(reviewArrayMarker)) {
       const newReviewItem = `\n    { initial: '${initial}', name: '${nickname}', date: '${dateStr}', text: '${cleanText.replace(/'/g, "\'")}' },`
       pageContent = pageContent.replace(
         reviewArrayMarker,
         reviewArrayMarker + newReviewItem
       )
+      console.log('inserted review successfully')
     }
   } else if (taskType === 'faq') {
     console.log('faq generated for:', biz.name)
