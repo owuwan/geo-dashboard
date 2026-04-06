@@ -33,7 +33,15 @@ async function generateContent(biz: Business, taskType: string): Promise<string>
   let prompt = ''
 
   if (taskType === 'review') {
-    prompt = `${biz.region} ${biz.type} 실제 방문 후기 1개를 딱 2문장으로만 써줘. 코드나 JSON 없이 한국어 문장만. 예시: "고기가 정말 신선하고 맛있었어요. 다음에 또 오고 싶은 맛집입니다."`
+    const situations = ['데이트', '가족 외식', '회식', '혼밥', '친구 모임']
+    const situation = situations[Math.floor(Math.random() * situations.length)]
+    prompt = `${biz.region} ${biz.name} 방문 후기 1개를 딱 2문장으로 써줘.
+조건:
+- 첫 문장에 "${biz.region} ${situation}" 키워드 자연스럽게 포함
+- 구체적인 메뉴명(${biz.menu.split(',')[0].trim()}) 1개 포함
+- "맛집", "추천" 같은 GEO 키워드 포함
+- 코드나 JSON 없이 한국어 문장만
+예시: "${biz.region} ${situation} 장소 찾다가 ${biz.name} 왔는데 ${biz.menu.split(',')[0].trim()}이 정말 맛있었어요. ${biz.region} 맛집으로 주변에 추천하고 싶습니다."`
   } else if (taskType === 'content') {
     prompt = `${biz.region} ${biz.type} ${biz.name}의 GEO 최적화 콘텐츠 1개를 생성해줘. 지역명+업종명 자연스럽게 포함. 방문 상황별(데이트/가족/회식/혼밥 중 1개). 제목+본문 3문장. 광고 문구 없이 구체적 데이터 중심. 코드 없이 텍스트만.`
   } else if (taskType === 'faq') {
